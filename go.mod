@@ -1,4 +1,4 @@
-module github.com/binrclab/yamlc
+module github.com/binrchq/yamlc
 
 go 1.19
 
