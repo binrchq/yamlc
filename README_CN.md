@@ -14,7 +14,7 @@
 ## 安装
 
 ```bash
-go get github.com/binrclab/yamlc
+go get binrc.com/pkg/yamlc
 ```
 
 ## 支持的注释风格
@@ -244,7 +244,7 @@ package main
 
 import (
     "fmt"
-    "github.com/binrclab/yamlc"
+    "binrc.com/pkg/yamlc"
 )
 
 func main() {

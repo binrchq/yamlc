@@ -14,7 +14,7 @@ A powerful Go YAML generator that supports multiple comment styles and flexible 
 ## Installation
 
 ```bash
-go get github.com/binrclab/yamlc
+go get binrc.com/pkg/yamlc
 ```
 
 ## Supported Comment Styles
@@ -204,7 +204,7 @@ package main
 
 import (
     "fmt"
-    "github.com/binrclab/yamlc"
+    "binrc.com/pkg/yamlc"
 )
 
 func main() {

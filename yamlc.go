@@ -664,7 +664,11 @@ func generateStructDefault(fields []FieldInfo, indent int, options *Options) (st
 		}
 
 		// 添加字段间间隔
-		if shouldAddSpacing(options.Style, i, len(fields)) {
+		var nextField FieldInfo
+		if i+1 < len(fields) {
+			nextField = fields[i+1]
+		}
+		if shouldAddSpacing(options.Style, i, len(fields), field, nextField) {
 			result.WriteString("\n")
 		}
 	}
@@ -686,12 +690,25 @@ func calculateMaxFieldNameLen(fields []FieldInfo) int {
 }
 
 // shouldAddSpacing 判断是否应该添加间距
-func shouldAddSpacing(style CommentStyle, currentIndex, totalFields int) bool {
+func shouldAddSpacing(style CommentStyle, currentIndex, totalFields int, currentField, nextField FieldInfo) bool {
 	if currentIndex >= totalFields-1 {
 		return false
 	}
 
-	return style == StyleSpaced || style == StyleGrouped || style == StyleSectioned
+	switch style {
+	case StyleSpaced:
+		// 间隔风格：每个字段之间都添加空行
+		return true
+	case StyleGrouped:
+		// 分组风格：常规数据类型放在一起，遇到复杂数据类型时组间有空行分隔
+		// 如果当前字段是复杂类型，或者下一个字段是复杂类型，则添加空行
+		return currentField.HasChildren || nextField.HasChildren
+	case StyleSectioned:
+		// 分节风格：也需要间距
+		return true
+	default:
+		return false
+	}
 }
 
 // generateFieldWithComment 生成带注释的字段
@@ -1636,9 +1653,16 @@ func GenWithValidation(v interface{}, opts ...Option) ([]byte, error) {
 		return nil, err
 	}
 
-	// 额外的后处理验证
+	// 额外的后处理验证和标准化
 	if err := ValidateGeneratedContent(data); err != nil {
 		return nil, fmt.Errorf("generated content validation failed: %w", err)
+	}
+
+	// 标准化行结束符：统一为 \n
+	content := string(data)
+	if strings.Contains(content, "\r\n") {
+		content = strings.ReplaceAll(content, "\r\n", "\n")
+		data = []byte(content)
 	}
 
 	return data, nil
@@ -1655,12 +1679,13 @@ func ValidateGeneratedContent(data []byte) error {
 		return fmt.Errorf("generated content contains invalid UTF-8 sequences")
 	}
 
-	// 检查行结束符一致性
+	// 检查行结束符一致性（标准化在 GenWithValidation 中处理）
+	// 这里只验证，不修改数据
 	content := string(data)
-	if strings.Contains(content, "\r\n") && strings.Contains(content, "\n") {
-		// 混合行结束符，标准化为\n
-		content = strings.ReplaceAll(content, "\r\n", "\n")
-		copy(data, []byte(content))
+	if strings.Contains(content, "\r\n") {
+		// 检测到混合行结束符，标准化会在 GenWithValidation 中处理
+		// 这里只验证，不返回错误，允许后续标准化
+		_ = content
 	}
 
 	return nil
